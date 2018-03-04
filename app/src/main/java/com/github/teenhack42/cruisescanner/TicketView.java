@@ -1,28 +1,25 @@
 package com.github.teenhack42.cruisescanner;
 
+import android.app.Activity;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.telecom.Call;
 import android.util.Log;
 import android.view.View;
-import android.widget.RadioGroup;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+
+import com.github.teenhack42.CruiseScanner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-public class TicketView extends AppCompatActivity {
+public class TicketView extends Activity {
 
 	Hook h = null;
 
@@ -41,77 +38,36 @@ public class TicketView extends AppCompatActivity {
 		setContentView(R.layout.activity_ticket_view);
 
 		uid = getIntent().getStringExtra("uid");
+		Log.d("UID", uid);
 
-		ExecutorService es = Executors.newSingleThreadExecutor();
-
-		Future result = es.submit(new downloadTicket(uid));
-		try {
-			ticket = (Ticket) result.get();
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-		}
-
-		es.shutdown();
-
-
-		nameV = findViewById(R.id.name);
-		nameV.setText(ticket.rover.name());
-
-		crewV = findViewById(R.id.crew);
-		crewV.setText(ticket.rover.crew);
-
-		mobileV = findViewById(R.id.mobile);
-		mobileV.setText(ticket.rover.mobile);
+		new dlTicket(CruiseScanner.getAppContext(), findViewById(android.R.id.content)).execute(uid);
 
 		admisionB = findViewById(R.id.toggleAdmited);
-		admisionB.setChecked(ticket.attendance);
-		admisionB.setOnClickListener(new View.OnClickListener() {
+		admisionB.setVisibility(View.INVISIBLE);
+
+		admisionB.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
 			@Override
-			public void onClick(View view) {
-
-				Boolean attendance = ticket.attendance;
-
-				if (admisionB.getText().toString().equals("On Board")) {
-					// is on board....
-					attendance = true;
-				} else {
-					attendance = false;
-				}
-
-				ExecutorService es = Executors.newSingleThreadExecutor();
-
-				Future result = es.submit(new setAttendance(uid, attendance));
-				try {
-					ticket.attendance = (Boolean) result.get();
-				} catch (InterruptedException | ExecutionException e) {
-					e.printStackTrace();
-				}
-
-				es.shutdown();
-
-
-				/*this.runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						adapter.notifyDataSetChanged();
-					}
-				});
-				*/
+			public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
+				new setAttendance().execute(new Attendance(uid, isChecked));
 			}
-		});
+		}) ;
+
 	}
 }
 
-class downloadTicket implements Callable<Ticket> {
+class dlTicket extends AsyncTask<String, Integer, Ticket> {
+	private Context mContext;
+	private View rootView;
 
-	String uid = null;
-
-	downloadTicket(String uid) {
-		this.uid = uid;
+	public dlTicket(Context context, View rootView) {
+		this.mContext=context;
+		this.rootView=rootView;
 	}
 
 	@Override
-	public Ticket call() throws Exception {
+	protected Ticket doInBackground(String... strings) {
+		String uid = strings[0];
+
 		Hook h = null;
 		Ticket t = null;
 		if (h == null) {
@@ -148,20 +104,45 @@ class downloadTicket implements Callable<Ticket> {
 		}
 		return t;
 	}
-}
 
-class setAttendance implements Callable<Boolean> {
-
-	String uid = null;
-	Boolean attendance = null;
-
-	setAttendance(String uid, Boolean att) {
-		this.uid = uid;
-		this.attendance = att;
-	}
 
 	@Override
-	public Boolean call() {
+	protected void onPostExecute(Ticket result) {
+		Log.d("dlTicket", "Downloaded");
+		TextView name = (TextView) rootView.findViewById(R.id.name);
+		name.setText(result.rover.fname + " " + result.rover.lname);
+
+		TextView crew = (TextView) rootView.findViewById(R.id.crew);
+		crew.setText(result.rover.crew);
+
+		TextView mobile = (TextView) rootView.findViewById(R.id.mobile);
+		mobile.setText(result.rover.mobile);
+
+		ToggleButton toggle = rootView.findViewById(R.id.toggleAdmited);
+		toggle.setChecked(result.attendance);
+		toggle.setVisibility(View.VISIBLE);
+	}
+}
+
+class Attendance {
+	String muid;
+	Boolean matt;
+
+	public Attendance(String uid, Boolean att) {
+		this.muid = uid;
+		this.matt = att;
+	}
+}
+
+class setAttendance extends AsyncTask<Attendance, Integer, Attendance> {
+
+	setAttendance() {}
+
+	@Override
+	protected Attendance doInBackground(Attendance... strings) {
+		String uid = strings[0].muid;
+		Boolean attendance = strings[0].matt;
+
 		Hook h = null;
 		Ticket t = null;
 		if (h == null) {
@@ -181,14 +162,14 @@ class setAttendance implements Callable<Boolean> {
 		JSONObject ticket;
 		JSONObject rover;
 
-		Log.d("TICKET JSON", ret);
-		Boolean out = null;
+
+		Attendance retAtt = null;
 		try {
-			out = new JSONObject(ret).getBoolean("attendance");
+			 retAtt = new Attendance(new JSONObject(ret).getString("uid"), new JSONObject(ret).getBoolean("attendance"));
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		return out;
-
+		
+		return retAtt;
 	}
 }

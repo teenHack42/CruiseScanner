@@ -48,6 +48,24 @@ public class Ticket {
 
 		return list;
 	}
+
+	public static ArrayList<Ticket> getTicketsFromServer() {
+		ArrayList<Ticket> list = null;
+		ExecutorService es = Executors.newSingleThreadExecutor();
+
+		Future result = es.submit(new TicketDownloader());
+		try {
+			list = (ArrayList<Ticket>) result.get();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
+
+		es.shutdown();
+
+		return list;
+	}
 }
 
 class Rover {

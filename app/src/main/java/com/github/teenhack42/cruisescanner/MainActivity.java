@@ -1,6 +1,7 @@
 package com.github.teenhack42.cruisescanner;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,14 +35,15 @@ import java.util.concurrent.ExecutionException;
 import github.nisrulz.qreader.QRDataListener;
 import github.nisrulz.qreader.QREader;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
 	// QREader
 	private SurfaceView mySurfaceView;
 	private QREader qrEader;
 
 	private String qr_string = "";
-	private Long qrSoundTime = null;
+	private Long qrSoundTime = System.currentTimeMillis();
+	private Long qrCoolTime = System.currentTimeMillis();
 
 	private TextView text;
 	private TextView paid_text;
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_main);
 
 		Context context = CruiseScanner.getAppContext();
@@ -89,22 +93,26 @@ public class MainActivity extends AppCompatActivity {
 			@Override
 			public void onDetected(final String data) {
 
-				String[] dataSplit = data.split(":");
-				if (!(dataSplit[0].equals("HC2018"))) {
-					return;
-				}
+				if ((System.currentTimeMillis() - qrCoolTime) > 500) {
+					qrCoolTime = System.currentTimeMillis();
 
-				switch (dataSplit[1]) {
-					case "Ticket":
-						checkOffTicket(dataSplit[2]);
-						break;
+
+					String[] dataSplit = data.split(":");
+					if (!(dataSplit[0].equals("HC2018"))) {
+						return;
+					}
+
+					switch (dataSplit[1]) {
+						case "Ticket":
+							Intent myIntent = new Intent(MainActivity.this, TicketView.class);
+							myIntent.putExtra("uid", dataSplit[2]);
+							MainActivity.this.startActivity(myIntent);
+							//checkOffTicket(dataSplit[2]);
+							break;
+					}
 				}
 			}
-		}).facing(QREader.BACK_CAM)
-				.enableAutofocus(true)
-				.height(mySurfaceView.getHeight())
-				.width(mySurfaceView.getWidth())
-				.build();
+		}).facing(QREader.BACK_CAM).enableAutofocus(true).height(mySurfaceView.getHeight()).width(mySurfaceView.getWidth()).build();
 
 
 		if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_DENIED) {

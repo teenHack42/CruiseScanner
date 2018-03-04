@@ -1,6 +1,7 @@
 package com.github.teenhack42.cruisescanner;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -57,11 +58,21 @@ public class TicketAdapter extends BaseAdapter {
 		ImageView attendanceColour = (ImageView) rowView.findViewById(R.id.attendanceBadge);
 
 		Ticket ticket = (Ticket) getItem(position);
+		final String ticketUID = ticket.uid;
 
 		name.setText(ticket.rover.fname + " " + ticket.rover.lname);
 		crew.setText(ticket.rover.crew);
 		mobile.setText(ticket.rover.mobile);
 		attendanceColour.setBackgroundColor(ticket.attendance ? Color.GREEN : Color.RED);
+
+		rowView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				Intent myIntent = new Intent(mContext.getApplicationContext(), TicketView.class);
+				myIntent.putExtra("uid", ticketUID);
+				mContext.startActivity(myIntent);
+			}
+		});
 
 		return rowView;
 	}

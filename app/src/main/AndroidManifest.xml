@@ -21,6 +21,7 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
+		<activity android:name=".TicketView" />
 		<activity
 			android:name=".TicketSearch"
 			android:label="@string/title_activity_ticket_search"
@@ -30,7 +31,6 @@
 				android:name="android.support.PARENT_ACTIVITY"
 				android:value="com.github.teenhack42.cruisescanner.MainActivity" />
 		</activity>
-		<activity android:name=".TicketView"></activity>
 	</application>
 
 </manifest>
