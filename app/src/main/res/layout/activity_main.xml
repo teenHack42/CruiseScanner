@@ -10,9 +10,10 @@
 	<SurfaceView
 		android:id="@+id/camera_view"
 		android:layout_width="match_parent"
-		android:layout_height="match_parent"
+		android:layout_height="420dp"
 		android:layout_above="@+id/info"
-		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintBottom_toTopOf="@+id/scannedTickets"
+		app:layout_constraintHorizontal_bias="0.5"
 		app:layout_constraintLeft_toLeftOf="parent"
 		app:layout_constraintRight_toRightOf="parent"
 		app:layout_constraintTop_toTopOf="parent" />
@@ -21,17 +22,17 @@
 		android:id="@+id/ticket_uid"
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:layout_marginEnd="8dp"
-		android:layout_marginStart="8dp"
-		android:layout_marginTop="8dp"
 		android:fontFamily="monospace"
 		android:textAlignment="center"
 		android:textColor="@android:color/holo_orange_dark"
 		android:textSize="18sp"
 		android:typeface="normal"
 		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="0.0"
+		app:layout_constraintLeft_toLeftOf="parent"
+		app:layout_constraintRight_toRightOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="@+id/camera_view" />
+		tools:layout_editor_absoluteY="98dp" />
 
 	<TextView
 		android:id="@+id/paid_bool"
@@ -52,15 +53,70 @@
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_marginBottom="32dp"
-		android:layout_marginRight="16dp"
+		android:layout_marginEnd="32dp"
 		android:clickable="true"
 		android:tint="@android:color/black"
 		app:backgroundTint="@android:color/holo_blue_light"
 		app:elevation="0dp"
 		app:fabSize="normal"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintRight_toRightOf="parent"
+		app:layout_constraintBottom_toBottomOf="@+id/camera_view"
+		app:layout_constraintEnd_toEndOf="@+id/camera_view"
 		app:rippleColor="@android:color/holo_orange_dark"
 		app:srcCompat="@android:drawable/ic_menu_search" />
+
+	<android.support.constraint.ConstraintLayout
+		android:layout_width="0dp"
+		android:layout_height="39dp"
+		android:layout_marginEnd="8dp"
+		android:layout_marginStart="8dp"
+		android:layout_marginTop="8dp"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent">
+
+		<RadioGroup
+			android:id="@+id/scanType"
+			android:layout_width="0dp"
+			android:layout_height="34dp"
+			android:layout_marginBottom="8dp"
+			android:checkedButton="@+id/radio_checkin"
+			android:orientation="horizontal"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent">
+
+			<RadioButton
+				android:id="@+id/radio_checkin"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="IN" />
+
+			<RadioButton
+				android:id="@+id/radio_checkout"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="OUT" />
+
+			<RadioButton
+				android:id="@+id/radio_view"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="View" />
+		</RadioGroup>
+	</android.support.constraint.ConstraintLayout>
+
+	<ListView
+		android:id="@+id/scannedTickets"
+		android:layout_width="0dp"
+		android:layout_height="0dp"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="0.5"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/camera_view" />
 
 </android.support.constraint.ConstraintLayout>
