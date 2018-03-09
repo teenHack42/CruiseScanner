@@ -20,14 +20,7 @@ import java.util.HashMap;
 
 public class TicketView extends Activity {
 
-	Hook h = null;
-
-	Ticket ticket = null;
 	String uid = null;
-
-	TextView nameV;
-	TextView crewV;
-	TextView mobileV;
 
 	ToggleButton admisionB;
 
@@ -96,8 +89,6 @@ class dlTicket extends AsyncTask<String, Integer, Ticket> {
 			t.attendance = ticket.getBoolean("attendance");
 			t.rover.crew = rover.getString("crew");
 			t.rover.mobile = rover.getString("mobile");
-			//paid = ticket.getBoolean("paid");
-			//entered = ticket.getBoolean("entered");
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -108,13 +99,13 @@ class dlTicket extends AsyncTask<String, Integer, Ticket> {
 	@Override
 	protected void onPostExecute(Ticket result) {
 		Log.d("dlTicket", "Downloaded");
-		TextView name = (TextView) rootView.findViewById(R.id.name);
+		TextView name = rootView.findViewById(R.id.name);
 		name.setText(result.rover.fname + " " + result.rover.lname);
 
-		TextView crew = (TextView) rootView.findViewById(R.id.crew);
+		TextView crew = rootView.findViewById(R.id.crew);
 		crew.setText(result.rover.crew);
 
-		TextView mobile = (TextView) rootView.findViewById(R.id.mobile);
+		TextView mobile = rootView.findViewById(R.id.mobile);
 		mobile.setText(result.rover.mobile);
 
 		ToggleButton toggle = rootView.findViewById(R.id.toggleAdmited);
@@ -157,9 +148,6 @@ class setAttendance extends AsyncTask<Attendance, Integer, Attendance> {
 		params.put("attendance", attendance);
 
 		String ret = h.post("set_attendance", params);
-
-		JSONObject ticket;
-		JSONObject rover;
 
 
 		Attendance retAtt = null;

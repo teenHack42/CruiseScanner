@@ -134,7 +134,7 @@ public class Hook {
 			return sb.toString();
 
 		} else {
-			return new String("false : " + responseCode);
+			return "false : " + responseCode;
 		}
 	}
 

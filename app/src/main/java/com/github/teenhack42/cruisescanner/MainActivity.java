@@ -76,8 +76,8 @@ public class MainActivity extends Activity {
 
 		qrSoundTime = System.currentTimeMillis();
 
-		text = (TextView) findViewById(R.id.ticket_uid);
-		paid_text = (TextView) findViewById(R.id.paid_bool);
+		text = findViewById(R.id.ticket_uid);
+		paid_text = findViewById(R.id.paid_bool);
 
 		scan_type_group = findViewById(R.id.scanType);
 		scan_type = scan_type_group.getCheckedRadioButtonId();
@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
 		});
 
 
-		final FloatingActionButton searchTicketViewButton = (FloatingActionButton) findViewById(R.id.floatingActionShowSearch);
+		final FloatingActionButton searchTicketViewButton = findViewById(R.id.floatingActionShowSearch);
 		searchTicketViewButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				Intent myIntent = new Intent(MainActivity.this, TicketSearch.class);
@@ -97,7 +97,7 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		scanned_tickets = new ArrayList<Ticket>();
+		scanned_tickets = new ArrayList<>();
 		addToScannedList(null); //just to render the list for the first time
 
 		// Setup SurfaceView
@@ -199,7 +199,7 @@ public class MainActivity extends Activity {
 		if (t != null) {
 			scanned_tickets.add(0, t);
 		}
-		ListView mListView = (ListView) findViewById(R.id.scannedTickets);
+		ListView mListView = findViewById(R.id.scannedTickets);
 		TicketAdapter adapter = new TicketAdapter(this, scanned_tickets);
 		mListView.setAdapter(adapter);
 	}

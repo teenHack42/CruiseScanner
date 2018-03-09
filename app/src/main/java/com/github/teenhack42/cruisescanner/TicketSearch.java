@@ -1,5 +1,6 @@
 package com.github.teenhack42.cruisescanner;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -95,7 +96,7 @@ class loadList extends AsyncTask<Void, Integer, ArrayList<Ticket>> {
 
 	@Override
 	protected void onPostExecute(ArrayList<Ticket> tickets) {
-		ListView mListView = (ListView) rootView.findViewById(R.id.searchResults);
+		ListView mListView = rootView.findViewById(R.id.searchResults);
 		TicketAdapter adapter = new TicketAdapter(this.mContext, tickets);
 
 		if (mListView != null) {
