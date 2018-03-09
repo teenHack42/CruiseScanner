@@ -1,10 +1,6 @@
 package com.github.teenhack42.cruisescanner;
 
-import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.github.teenhack42.CruiseScanner;
 
 import org.json.JSONException;
 import org.json.JSONObject;

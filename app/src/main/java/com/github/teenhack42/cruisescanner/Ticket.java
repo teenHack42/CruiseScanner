@@ -31,7 +31,7 @@ public class Ticket {
 		this.rover = r;
 	}
 
-	public static ArrayList<Ticket> downloadTickets() {
+	public static ArrayList<Ticket> getTicketsFromServer() {
 		ArrayList<Ticket> list = null;
 		ExecutorService es = Executors.newSingleThreadExecutor();
 
@@ -49,11 +49,11 @@ public class Ticket {
 		return list;
 	}
 
-	public static ArrayList<Ticket> getTicketsFromServer() {
+	public static ArrayList<Ticket> searchTicketsFromServer(String query) {
 		ArrayList<Ticket> list = null;
 		ExecutorService es = Executors.newSingleThreadExecutor();
 
-		Future result = es.submit(new TicketDownloader());
+		Future result = es.submit(new TicketDownloader(query));
 		try {
 			list = (ArrayList<Ticket>) result.get();
 		} catch (InterruptedException e) {
@@ -96,6 +96,16 @@ class Rover {
 
 class TicketDownloader implements Callable {
 
+	private String mQuery ;
+
+	public TicketDownloader(String q) {
+		this.mQuery = q;
+	}
+
+	public TicketDownloader() {
+		this.mQuery = null;
+	}
+
 	@Override
 	public List<Ticket> call() throws Exception {
 		return downloadTickets();
@@ -113,6 +123,10 @@ class TicketDownloader implements Callable {
 		}
 
 		HashMap<String, Object> params = new HashMap<>();
+
+		if(this.mQuery != null) {
+			params.put("query", this.mQuery);
+		}
 
 		if (!(h == null)) {
 			String data = h.post("get_ticket_list", params);

@@ -13,24 +13,23 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
+import android.widget.ListView;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.teenhack42.CruiseScanner;
-import com.github.teenhack42.cruisescanner.Hook;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
 
 import github.nisrulz.qreader.QRDataListener;
 import github.nisrulz.qreader.QREader;
@@ -47,6 +46,11 @@ public class MainActivity extends Activity {
 
 	private TextView text;
 	private TextView paid_text;
+
+	private RadioGroup scan_type_group;
+	private int scan_type;
+
+	private ArrayList<Ticket> scanned_tickets;
 
 	public Hook hook = null;
 
@@ -75,6 +79,16 @@ public class MainActivity extends Activity {
 		text = (TextView) findViewById(R.id.ticket_uid);
 		paid_text = (TextView) findViewById(R.id.paid_bool);
 
+		scan_type_group = findViewById(R.id.scanType);
+		scan_type = scan_type_group.getCheckedRadioButtonId();
+		scan_type_group.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(RadioGroup radioGroup, int i) {
+				scan_type = scan_type_group.getCheckedRadioButtonId();
+			}
+		});
+
+
 		final FloatingActionButton searchTicketViewButton = (FloatingActionButton) findViewById(R.id.floatingActionShowSearch);
 		searchTicketViewButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
@@ -82,6 +96,9 @@ public class MainActivity extends Activity {
 				MainActivity.this.startActivity(myIntent);
 			}
 		});
+
+		scanned_tickets = new ArrayList<Ticket>();
+		addToScannedList(null); //just to render the list for the first time
 
 		// Setup SurfaceView
 		// -----------------
@@ -96,7 +113,6 @@ public class MainActivity extends Activity {
 				if ((System.currentTimeMillis() - qrCoolTime) > 500) {
 					qrCoolTime = System.currentTimeMillis();
 
-
 					String[] dataSplit = data.split(":");
 					if (!(dataSplit[0].equals("HC2018"))) {
 						return;
@@ -104,10 +120,47 @@ public class MainActivity extends Activity {
 
 					switch (dataSplit[1]) {
 						case "Ticket":
-							Intent myIntent = new Intent(MainActivity.this, TicketView.class);
-							myIntent.putExtra("uid", dataSplit[2]);
-							MainActivity.this.startActivity(myIntent);
-							//checkOffTicket(dataSplit[2]);
+							String uid = dataSplit[2];
+							switch (scan_type) {
+								case R.id.radio_view:
+									Intent myIntent = new Intent(MainActivity.this, TicketView.class);
+									myIntent.putExtra("uid", uid);
+									MainActivity.this.startActivity(myIntent);
+									break;
+
+								case R.id.radio_checkin:
+									new setAttendance().execute(new Attendance(uid, true));
+									MainActivity.this.runOnUiThread(new Runnable() {
+										@Override
+										public void run() {
+											paid_text.setText("IN");
+											paid_text.postDelayed(new Runnable() {
+												@Override
+												public void run() {
+													paid_text.setText("");
+												}
+											}, 500);
+										}
+									});
+									break;
+
+								case R.id.radio_checkout:
+									new setAttendance().execute(new Attendance(uid, false));
+									MainActivity.this.runOnUiThread(new Runnable() {
+										@Override
+										public void run() {
+											paid_text.setText("OUT");
+											paid_text.postDelayed(new Runnable() {
+												@Override
+												public void run() {
+													paid_text.setText("");
+												}
+											}, 500);
+										}
+									});
+
+									break;
+							}
 							break;
 					}
 				}
@@ -141,69 +194,13 @@ public class MainActivity extends Activity {
 		qrEader.stop();
 	}
 
-	public void checkOffTicket(final String uid) {
+	private void addToScannedList(Ticket t) {
 
-		if (((System.currentTimeMillis() - qrSoundTime) > 1500) || (((System.currentTimeMillis() - qrSoundTime) < 1500) && (!qr_string.equals(uid)))) {
-			try {
-				Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-				Ringtone r = RingtoneManager.getRingtone(CruiseScanner.getAppContext(), notification);
-				r.play();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			qrSoundTime = System.currentTimeMillis();
-
-
-			//if (!qr_string.equals(uid)) {
-			Log.d("QREader", "Value : " + uid + " QR string: " + qr_string);
-			qr_string = uid;
-
-			MainActivity.this.runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					text.setText(uid);
-
-					HashMap<String, Object> params = new HashMap<String, Object>();
-					params.put("uid", uid);
-
-
-					new CheckOffTicket().execute(params);
-				}
-			});
-			//}
+		if (t != null) {
+			scanned_tickets.add(0, t);
 		}
-	}
-
-
-	class CheckOffTicket extends AsyncTask<HashMap<String, Object>, Integer, String> {
-		protected String doInBackground(HashMap<String, Object>... params) {
-			return hook.post("checkin", params[0]);
-		}
-
-		protected void onPostExecute(String result) {
-			JSONObject json = null;
-
-			boolean valid = false;
-			boolean paid = false;
-			boolean allow = false;
-
-			try {
-				json = new JSONObject(result);
-				valid = json.getBoolean("valid");
-				paid = json.getBoolean("paid");
-				allow = json.getBoolean("allow");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-			text.setText("valid: " + valid + " allow: " + allow);
-			paid_text.setText(paid ? "PAID" : "PLEASE PAY");
-			paid_text.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					paid_text.setText("");
-				}
-			}, 4000);
-
-		}
+		ListView mListView = (ListView) findViewById(R.id.scannedTickets);
+		TicketAdapter adapter = new TicketAdapter(this, scanned_tickets);
+		mListView.setAdapter(adapter);
 	}
 }
