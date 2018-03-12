@@ -2,6 +2,7 @@ package com.github.teenhack42.cruisescanner;
 
 import android.app.Activity;
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,12 +38,12 @@ public class TicketView extends Activity {
 		admisionB = findViewById(R.id.toggleAdmited);
 		admisionB.setVisibility(View.INVISIBLE);
 
-		admisionB.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
+		admisionB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-				new setAttendance().execute(new Attendance(uid, isChecked));
+				new setAttendance(CruiseScanner.getAppContext()).execute(new Attendance(uid, isChecked));
 			}
-		}) ;
+		});
 
 	}
 }
@@ -51,9 +52,13 @@ class dlTicket extends AsyncTask<String, Integer, Ticket> {
 	private Context mContext;
 	private View rootView;
 
+	MediaPlayer sound_ding_error = null;
+
+
 	public dlTicket(Context context, View rootView) {
-		this.mContext=context;
-		this.rootView=rootView;
+		this.mContext = context;
+		this.rootView = rootView;
+		sound_ding_error = MediaPlayer.create(mContext, R.raw.ding_error);
 	}
 
 	@Override
@@ -64,7 +69,7 @@ class dlTicket extends AsyncTask<String, Integer, Ticket> {
 		Ticket t = null;
 		if (h == null) {
 			try {
-				h = new Hook("http://192.168.0.12:3000/app/hook");
+				h = new Hook();
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
@@ -82,13 +87,16 @@ class dlTicket extends AsyncTask<String, Integer, Ticket> {
 
 			Log.d("TICKET JSON", ret);
 
-			ticket = new JSONObject(ret);
-			rover = ticket.getJSONObject("rover");
+			if (!ret.contains("false :")) {
 
-			t = new Ticket(ticket.getString("uid"), new Rover(rover.getString("uid"), rover.getString("fname"), rover.getString("lname")));
-			t.attendance = ticket.getBoolean("attendance");
-			t.rover.crew = rover.getString("crew");
-			t.rover.mobile = rover.getString("mobile");
+				ticket = new JSONObject(ret);
+				rover = ticket.getJSONObject("rover");
+
+				t = new Ticket(ticket.getString("uid"), new Rover(rover.getString("uid"), rover.getString("fname"), rover.getString("lname")));
+				t.attendance = ticket.getBoolean("attendance");
+				t.rover.crew = rover.getString("crew");
+				t.rover.mobile = rover.getString("mobile");
+			}
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -98,19 +106,25 @@ class dlTicket extends AsyncTask<String, Integer, Ticket> {
 
 	@Override
 	protected void onPostExecute(Ticket result) {
-		Log.d("dlTicket", "Downloaded");
-		TextView name = rootView.findViewById(R.id.name);
-		name.setText(result.rover.fname + " " + result.rover.lname);
+		if (!(result == null)) {
+			Log.d("dlTicket", String.valueOf(result));
+			TextView name = rootView.findViewById(R.id.name);
+			name.setText(result.rover.fname + " " + result.rover.lname);
 
-		TextView crew = rootView.findViewById(R.id.crew);
-		crew.setText(result.rover.crew);
+			TextView crew = rootView.findViewById(R.id.crew);
+			crew.setText(result.rover.crew);
 
-		TextView mobile = rootView.findViewById(R.id.mobile);
-		mobile.setText(result.rover.mobile);
+			TextView mobile = rootView.findViewById(R.id.mobile);
+			mobile.setText(result.rover.mobile);
 
-		ToggleButton toggle = rootView.findViewById(R.id.toggleAdmited);
-		toggle.setChecked(result.attendance);
-		toggle.setVisibility(View.VISIBLE);
+			ToggleButton toggle = rootView.findViewById(R.id.toggleAdmited);
+			toggle.setChecked(result.attendance);
+			toggle.setVisibility(View.VISIBLE);
+		} else {
+			//no such ticket
+			sound_ding_error.start();
+		}
+
 	}
 }
 
@@ -126,7 +140,14 @@ class Attendance {
 
 class setAttendance extends AsyncTask<Attendance, Integer, Attendance> {
 
-	setAttendance() {}
+	private Context mContext;
+
+	MediaPlayer sound_ding_error = null;
+
+	public setAttendance(Context context) {
+		this.mContext = context;
+		sound_ding_error = MediaPlayer.create(mContext, R.raw.ding_error);
+	}
 
 	@Override
 	protected Attendance doInBackground(Attendance... strings) {
@@ -137,7 +158,7 @@ class setAttendance extends AsyncTask<Attendance, Integer, Attendance> {
 		Ticket t = null;
 		if (h == null) {
 			try {
-				h = new Hook("http://192.168.0.12:3000/app/hook");
+				h = new Hook();
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
@@ -149,14 +170,20 @@ class setAttendance extends AsyncTask<Attendance, Integer, Attendance> {
 
 		String ret = h.post("set_attendance", params);
 
+		Log.d("SetAttendance", ret);
 
-		Attendance retAtt = null;
-		try {
-			 retAtt = new Attendance(new JSONObject(ret).getString("uid"), new JSONObject(ret).getBoolean("attendance"));
-		} catch (JSONException e) {
-			e.printStackTrace();
+		if (!ret.contains("false :")) { //if there is no http error
+
+			Attendance retAtt = null;
+			try {
+				retAtt = new Attendance(new JSONObject(ret).getString("uid"), new JSONObject(ret).getBoolean("attendance"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+
+			return retAtt;
 		}
-		
-		return retAtt;
+		sound_ding_error.start();
+		return null;
 	}
 }

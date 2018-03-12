@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -68,7 +69,7 @@ public class MainActivity extends Activity {
 		}
 
 		try {
-			hook = new Hook("http://192.168.0.12:3000/app/hook");
+			hook = new Hook("http://192.16.0.12/api/hook");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			Toast.makeText(CruiseScanner.getAppContext(), "Server Address Invalid", Toast.LENGTH_LONG);
@@ -97,12 +98,11 @@ public class MainActivity extends Activity {
 			}
 		});
 
-		scanned_tickets = new ArrayList<>();
-		addToScannedList(null); //just to render the list for the first time
-
 		// Setup SurfaceView
 		// -----------------
 		mySurfaceView = (SurfaceView) findViewById(R.id.camera_view);
+
+		final MediaPlayer sound_ding_up = MediaPlayer.create(MainActivity.this, R.raw.ding_up);
 
 		// Init QREader
 		// ------------
@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onDetected(final String data) {
 
-				if ((System.currentTimeMillis() - qrCoolTime) > 500) {
+				if ((System.currentTimeMillis() - qrCoolTime) > 800) {
 					qrCoolTime = System.currentTimeMillis();
 
 					String[] dataSplit = data.split(":");
@@ -120,6 +120,7 @@ public class MainActivity extends Activity {
 
 					switch (dataSplit[1]) {
 						case "Ticket":
+							sound_ding_up.start();
 							String uid = dataSplit[2];
 							switch (scan_type) {
 								case R.id.radio_view:
@@ -129,7 +130,7 @@ public class MainActivity extends Activity {
 									break;
 
 								case R.id.radio_checkin:
-									new setAttendance().execute(new Attendance(uid, true));
+									new setAttendance(MainActivity.this).execute(new Attendance(uid, true));
 									MainActivity.this.runOnUiThread(new Runnable() {
 										@Override
 										public void run() {
@@ -145,7 +146,7 @@ public class MainActivity extends Activity {
 									break;
 
 								case R.id.radio_checkout:
-									new setAttendance().execute(new Attendance(uid, false));
+									new setAttendance(MainActivity.this).execute(new Attendance(uid, false));
 									MainActivity.this.runOnUiThread(new Runnable() {
 										@Override
 										public void run() {
@@ -192,15 +193,5 @@ public class MainActivity extends Activity {
 		// --------------------
 		qrEader.releaseAndCleanup();
 		qrEader.stop();
-	}
-
-	private void addToScannedList(Ticket t) {
-
-		if (t != null) {
-			scanned_tickets.add(0, t);
-		}
-		ListView mListView = findViewById(R.id.scannedTickets);
-		TicketAdapter adapter = new TicketAdapter(this, scanned_tickets);
-		mListView.setAdapter(adapter);
 	}
 }

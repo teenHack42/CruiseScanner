@@ -34,6 +34,10 @@ public class Hook {
 		this.url = new URL(url_in);
 	}
 
+	Hook() throws MalformedURLException {
+		this.url = new URL("http://192.168.0.12/api/hook");
+	}
+
 	public String post(String action, HashMap<String, Object> data_hash) {
 
 		JSONObject postDataParams = new JSONObject();

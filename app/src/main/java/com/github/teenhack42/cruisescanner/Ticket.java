@@ -117,7 +117,7 @@ class TicketDownloader implements Callable {
 		List<Ticket> list = new ArrayList<>();
 
 		try {
-			h = new Hook("http://192.168.0.12:3000/app/hook");
+			h = new Hook();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
